@@ -3,6 +3,11 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**
 !**/src/test/**
+#
+#
+#
+#
+www.yourhost.pfx
 ### STS ###
 .apt_generated
 .classpath
