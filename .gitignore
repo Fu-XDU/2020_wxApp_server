@@ -3,6 +3,11 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**
 !**/src/test/**
+src/main/java/com/wxapp/springboot/service/Asphalt9Service.java
+src/main/java/com/wxapp/springboot/controller/Asphalt9Controller.java
+src/main/resources/application.properties
+uploadAndRestart.sh
+www.flxdu.cn.pfx
 ### STS ###
 .apt_generated
 .classpath
