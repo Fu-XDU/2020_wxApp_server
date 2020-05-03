@@ -7,7 +7,7 @@ src/main/java/com/wxapp/springboot/service/Asphalt9Service.java
 src/main/java/com/wxapp/springboot/controller/Asphalt9Controller.java
 src/main/resources/application.properties
 uploadAndRestart.sh
-www.flxdu.cn.pfx
+*.pfx
 ### STS ###
 .apt_generated
 .classpath
@@ -33,3 +33,14 @@ build/
 
 ### VS Code ###
 .vscode/
+### Windows ###
+[Dd]esktop.ini
+Thumbs.db
+$RECYCLE.BIN/
+
+### macOS ###
+.DS_Store
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
