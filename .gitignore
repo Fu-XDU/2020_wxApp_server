@@ -7,7 +7,7 @@ target/
 #
 #
 #
-www.yourhost.pfx
+*.pfx
 ### STS ###
 .apt_generated
 .classpath
@@ -33,3 +33,14 @@ build/
 
 ### VS Code ###
 .vscode/
+### Windows ###
+[Dd]esktop.ini
+Thumbs.db
+$RECYCLE.BIN/
+
+### macOS ###
+.DS_Store
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes

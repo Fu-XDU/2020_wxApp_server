@@ -17,10 +17,10 @@ import org.stringtree.json.JSONValidatingWriter;
 public class DbService {
     private static Connection conn;
     private static PreparedStatement stmt;
-    private static final String driver = "";
-    private static final String url = "";
-    private static final String user = "";// Mysql用户名
-    private static final String password = "";// Mysql密码
+    private static final String driver = "com.mysql.cj.jdbc.Driver";
+    private static final String url = "jdbc:mysql://127.0.0.1:3306/wxapp?useUnicode=true&characterEncoding=utf8";
+    private static final String user = "root";// Mysql用户名
+    private static final String password = "123456";// Mysql密码
     private int ret;
 
     public String handleSql(String sql) {
