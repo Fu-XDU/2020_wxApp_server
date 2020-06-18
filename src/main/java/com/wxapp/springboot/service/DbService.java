@@ -15,24 +15,26 @@ import org.stringtree.json.JSONValidatingWriter;
 
 @Service
 public class DbService {
-    private static Connection conn;
-    private static PreparedStatement stmt;
-    private static final String driver = "com.mysql.cj.jdbc.Driver";
-    private static final String url = "jdbc:mysql://127.0.0.1:3306/wxapp?useUnicode=true&characterEncoding=utf8";
-    private static final String user = "root";// Mysql用户名
-    private static final String password = "123456";// Mysql密码
-    private int ret;
+    public static Connection conn;
+    public static PreparedStatement stmt;
+    private final String ip = "127.0.0.1";
+    private final String port = "3306";
+    private final String driver = "com.mysql.cj.jdbc.Driver";
+    public String dbname = "wxapp";
+    public String user = "wxapp";
+    public String password = "12345678";
+
 
     public String handleSql(String sql) {
-        if (!connect()) {
+        if (!connect())
             return "数据库连接失败！";
-        }
         if (sql.split(" ")[0].toUpperCase().equals("SELECT") || sql.split(" ")[0].toUpperCase().equals("SHOW"))
             return select(sql);
         else return runMysql(sql);
     }
 
     public boolean connect() {
+        String url = "jdbc:mysql://" + ip + ":" + port + "/" + dbname + "?useUnicode=true&characterEncoding=utf8";
         try {
             if (conn == null || conn.isClosed()) {
                 //加载驱动程序
@@ -49,7 +51,7 @@ public class DbService {
         return false;
     }
 
-    public String select(String sql) {
+    private String select(String sql) {
         try {
             connect();
             return new JSONValidatingWriter().write(
@@ -64,7 +66,7 @@ public class DbService {
     }
 
     public String runMysql(String sql) {
-        int add = 0;
+        int add = 0, ret;
         String iosql = null;
         if (sql.endsWith("_Add")) {
             sql = sql.substring(0, sql.length() - 4);
@@ -120,8 +122,7 @@ public class DbService {
         connect();
         String sql = "select table_name from information_schema.tables where table_schema='" + dbname + "'";
         List<String> list = new ArrayList<>();
-        stmt = conn.prepareStatement(sql);
-        ResultSet result = stmt.executeQuery(sql);
+        ResultSet result = selectReturnSet(sql);
         while (result.next()) {
             String tbname = result.getString("TABLE_NAME");
             if (tbname.length() == len)
@@ -139,16 +140,14 @@ public class DbService {
         List<String> tbnamelist = searchTableNamesbyLen("wxapp", 28);//openid的长度为28
         Iterator<String> iter = tbnamelist.iterator();
         BaseService base = new BaseService();
-        int day = Integer.parseInt(base.getTime("dd"));
-        int remaindays = 0, datatype, beginTime, diff, id;
+        int day = Integer.parseInt(base.getTime("dd")),remaindays = 0, datatype, beginTime, diff, id;
         double balance = 0, todayleft;
         boolean balanceupdate = false;
         String sql, tbname, time, begindate, enddate, nexttime;
         while (iter.hasNext()) {
             tbname = iter.next();
             sql = "select * from " + tbname;
-            stmt = conn.prepareStatement(sql);
-            ResultSet result = stmt.executeQuery(sql);
+            ResultSet result = selectReturnSet(sql);
             while (result.next()) {
                 //计算并存储remaindays
                 if (true) {
@@ -174,7 +173,7 @@ public class DbService {
                         begindate = result.getString("beginTime");
                         enddate = result.getString("endTime");
                         remaindays = base.nDaysBetweenTwoDate(begindate, enddate);
-                        remaindays = remaindays == 0 ? 1 : remaindays < 0 ? 0 : remaindays;
+                        remaindays = remaindays == 0 ? 1 : Math.max(remaindays, 0);
                     }
                     id = result.getInt("id");
                     //将remaindays存表
@@ -201,8 +200,7 @@ public class DbService {
 
     public void addIncome(String tbname, String id, String income) throws SQLException {
         String sql = "select * from " + tbname + " where id=" + id + "";
-        stmt = conn.prepareStatement(sql);
-        ResultSet result = stmt.executeQuery(sql);
+        ResultSet result = selectReturnSet(sql);
         double balance = 0, todayleft = 0;
         if (result.next()) {
             balance = result.getDouble("balance") + Double.parseDouble(income);
@@ -218,8 +216,7 @@ public class DbService {
      */
     public void addExpenditure(String tbname, String id, String expenditure) throws SQLException {
         String sql = "select * from " + tbname + " where id=" + id + "";
-        stmt = conn.prepareStatement(sql);
-        ResultSet result = stmt.executeQuery(sql);
+        ResultSet result = selectReturnSet(sql);
         double balance = 0, todayleft = 0, todaypay = 0, totalpay = 0;
         if (result.next()) {
             balance = result.getDouble("balance") + Double.parseDouble(expenditure);
@@ -264,9 +261,7 @@ public class DbService {
 
     public boolean deleteBudget(String openid, String budgetid) throws SQLException {
         String sql = "select * from " + openid;
-        connect();
-        stmt = conn.prepareStatement(sql);
-        ResultSet result = stmt.executeQuery(sql);
+        ResultSet result = selectReturnSet(sql);
         int count = 0;
         while (result.next()) {
             if (++count == 2)
@@ -284,18 +279,27 @@ public class DbService {
      */
     public boolean deleteHistory(String openid, String nameid, boolean rollback) throws SQLException {
         String sql = "select * from " + openid + "history where nameid=" + nameid + " or peerid=" + nameid;
-        connect();
-        stmt = conn.prepareStatement(sql);
-        ResultSet result = stmt.executeQuery(sql);
-        Double value;
+        ResultSet result = selectReturnSet(sql);
         //删掉上面查到的记录
         runMysql("delete from " + openid + "history where nameid=" + nameid + " or peerid=" + nameid);
         if (!rollback) return true;
+        recoverHistory(result, openid, nameid);
+        return true;
+    }
+
+    public ResultSet selectReturnSet(String sql) throws SQLException {
+        connect();
+        return conn.prepareStatement(sql).executeQuery(sql);
+    }
+
+    /*
+     * 将每条记录进行回复，加回到原预算额
+     * nameid是一定存在的
+     * 如果是转账历史，peer可能已经被删了，可以不判判断
+     */
+    private void recoverHistory(ResultSet result, String openid, String nameid) throws SQLException {
         while (result.next()) {
-            //将每条记录进行回复，加回到原预算额
-            //nameid是一定存在的
-            //如果是转账历史，peer可能已经被删了，可以不判判断
-            value = result.getDouble("value");
+            Double value = result.getDouble("value");
             //先处理peer为null的情况
             if (result.getString("peerid") == null) {
                 //value>0则为收入,value<0则为支出,value!=0
@@ -311,7 +315,6 @@ public class DbService {
                 addIncome(openid, nameid, -value + "");
             }
         }
-        return true;
     }
 
     /*
@@ -319,34 +322,12 @@ public class DbService {
      */
     public boolean delete1History(String openid, String id, boolean rollback) throws SQLException {
         String sql = "select * from " + openid + "history where id=" + id;
-        connect();
-        stmt = conn.prepareStatement(sql);
-        ResultSet result = stmt.executeQuery(sql);
-        Double value;
+        ResultSet result = selectReturnSet(sql);
         //删掉上面查到的记录
         runMysql("delete from " + openid + "history where id=" + id);
         if (!rollback) return true;
-        while (result.next()) {
-            String nameid = result.getString("nameid");
-            //将每条记录进行回复，加回到原预算额
-            //nameid是一定存在的
-            //如果是转账历史，peer可能已经被删了，可以不判判断
-            value = result.getDouble("value");
-            //先处理peer为null的情况
-            if (result.getString("peerid") == null) {
-                //value>0则为收入,value<0则为支出,value!=0
-                if (value > 0)
-                    addIncome(openid, nameid, -value + "");
-                else
-                    addExpenditure(openid, nameid, -value + "");
-            } else if (result.getString("nameid").equals(nameid)) {
-                addIncome(openid, result.getInt("peerid") + "", -value + "");
-                addExpenditure(openid, nameid, value + "");
-            } else if (result.getString("peerid").equals(nameid)) {
-                addExpenditure(openid, result.getInt("nameid") + "", value + "");
-                addIncome(openid, nameid, -value + "");
-            }
-        }
+        //对历史记录进行恢复
+        recoverHistory(result, openid, result.getString("nameid"));
         return true;
     }
 }

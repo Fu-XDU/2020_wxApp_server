@@ -16,4 +16,9 @@ class BaseControllerTest {
     void time() {
         System.out.println(bc.time("yyyy-MM-dd HH:mm:ss"));
     }
+
+    @Test
+    void timestamp() {
+        System.out.println(bc.time());
+    }
 }
