@@ -1,5 +1,6 @@
 package com.wxapp.springboot.service;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.io.PrintWriter;
@@ -17,13 +18,12 @@ import org.stringtree.json.JSONValidatingWriter;
 public class DbService {
     public static Connection conn;
     public static PreparedStatement stmt;
-    private final String ip = "127.0.0.1";
-    private final String port = "3306";
-    private final String driver = "com.mysql.cj.jdbc.Driver";
-    public String dbname = "wxapp";
-    public String user = "wxapp";
-    public String password = "12345678";
-
+    private final static String ip = "127.0.0.1";
+    private final static String port = "3306";
+    private final static String driver = "com.mysql.cj.jdbc.Driver";
+    public static String dbname = "wxapp";
+    public static String user = "wxapp";
+    public static String password = "12345678";
 
     public String handleSql(String sql) {
         if (!connect())
@@ -33,7 +33,7 @@ public class DbService {
         else return runMysql(sql);
     }
 
-    public boolean connect() {
+    private boolean connect() {
         String url = "jdbc:mysql://" + ip + ":" + port + "/" + dbname + "?useUnicode=true&characterEncoding=utf8";
         try {
             if (conn == null || conn.isClosed()) {
@@ -65,7 +65,7 @@ public class DbService {
         }
     }
 
-    public String runMysql(String sql) {
+    private String runMysql(@NotNull String sql) {
         int add = 0, ret;
         String iosql = null;
         if (sql.endsWith("_Add")) {
@@ -118,7 +118,7 @@ public class DbService {
         }
     }
 
-    public List<String> searchTableNamesbyLen(String dbname, int len) throws Exception {
+    private @NotNull List<String> searchTableNamesbyLen(String dbname, int len) throws Exception {
         connect();
         String sql = "select table_name from information_schema.tables where table_schema='" + dbname + "'";
         List<String> list = new ArrayList<>();
@@ -136,11 +136,11 @@ public class DbService {
         updateRecording();
     }
 
-    public void updateRecording() throws Exception {
+    private void updateRecording() throws Exception {
         List<String> tbnamelist = searchTableNamesbyLen("wxapp", 28);//openid的长度为28
         Iterator<String> iter = tbnamelist.iterator();
         BaseService base = new BaseService();
-        int day = Integer.parseInt(base.getTime("dd")),remaindays = 0, datatype, beginTime, diff, id;
+        int day = Integer.parseInt(base.getTime("dd")), remaindays = 0, datatype, beginTime, diff, id;
         double balance = 0, todayleft;
         boolean balanceupdate = false;
         String sql, tbname, time, begindate, enddate, nexttime;
@@ -198,7 +198,7 @@ public class DbService {
         }
     }
 
-    public void addIncome(String tbname, String id, String income) throws SQLException {
+    private void addIncome(String tbname, String id, String income) throws SQLException {
         String sql = "select * from " + tbname + " where id=" + id + "";
         ResultSet result = selectReturnSet(sql);
         double balance = 0, todayleft = 0;
@@ -214,7 +214,7 @@ public class DbService {
      * 添加支出
      * @para {expenditure} 若为正值则表示删除支出
      */
-    public void addExpenditure(String tbname, String id, String expenditure) throws SQLException {
+    private void addExpenditure(String tbname, String id, String expenditure) throws SQLException {
         String sql = "select * from " + tbname + " where id=" + id + "";
         ResultSet result = selectReturnSet(sql);
         double balance = 0, todayleft = 0, todaypay = 0, totalpay = 0;
@@ -277,7 +277,7 @@ public class DbService {
     /*
      * 删除某nameid的所有历史，同时将历史记录进行恢复，加回到原预算额
      */
-    public boolean deleteHistory(String openid, String nameid, boolean rollback) throws SQLException {
+    private boolean deleteHistory(String openid, String nameid, boolean rollback) throws SQLException {
         String sql = "select * from " + openid + "history where nameid=" + nameid + " or peerid=" + nameid;
         ResultSet result = selectReturnSet(sql);
         //删掉上面查到的记录
