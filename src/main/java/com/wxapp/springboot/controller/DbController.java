@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.sql.SQLException;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/")
 public class DbController {
     @Autowired
     DbService dbService = new DbService();

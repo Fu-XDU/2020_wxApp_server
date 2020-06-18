@@ -4,7 +4,7 @@ import com.wxapp.springboot.service.BaseService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/")
 //@Slf4j
 public class BaseController {
 
