@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/")
 //@Slf4j
 public class BaseController {
-
     BaseService base = new BaseService();
 
     @ResponseBody
