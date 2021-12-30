@@ -4,9 +4,6 @@ target/
 !**/src/main/**
 !**/src/test/**
 #
-#
-#
-#
 *.pfx
 ### STS ###
 .apt_generated
